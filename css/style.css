@@ -3,9 +3,21 @@
 
 /* Lamp item */
 .l{ background: url("../img/lamp-grey.png") no-repeat; }
+.on { background: url("../img/lamp-green.png") no-repeat; }
 /* Corner wire */
 .c{ background: url("../img/wire-corner.png") no-repeat; }
 /* Point */
 .p{ background: url("../img/wire-connection-point.png") no-repeat; }
 /* Wire */
 .w{ background: url("../img/wire.png") no-repeat; }
+
+
+/* game field */
+.field { }
+.clear { clear: both; height: 0px; line-height: 0px; }
+
+/* field ceil */
+.ceil { width: 38px; height: 38px; border: 1px solid black; float: left; }
+
+/* Battery */
+.battery{  }
