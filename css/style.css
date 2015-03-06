@@ -1,0 +1,11 @@
+
+.l, .c, .p, .w { width: 40px; height: 40px; background-position: -1px 0px; }
+
+/* Lamp item */
+.l{ background: url("../img/lamp-grey.png") no-repeat; }
+/* Corner wire */
+.c{ background: url("../img/wire-corner.png") no-repeat; }
+/* Point */
+.p{ background: url("../img/wire-connection-point.png") no-repeat; }
+/* Wire */
+.w{ background: url("../img/wire.png") no-repeat; }
