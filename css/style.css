@@ -20,4 +20,8 @@
 .ceil { width: 38px; height: 38px; border: 1px solid black; float: left; }
 
 /* Battery */
-.battery{  }
+.battery{ background: green; }
+
+
+.start { background: red; }
+.lamp { background: orange; }
