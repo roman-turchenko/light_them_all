@@ -128,76 +128,19 @@ $(document).ready(function(){
                     _next_points[i] = avaliable_points[random_point_key];
 
                     // TODO Добавляем стартовую точку как connection
+                    connection_points['x'+avaliable_points[random_point_key].x+'_y'+avaliable_points[random_point_key].y] = start_point_key;
 
 
-
-                    // Удаляем эту точку, чтобы она не учавствовала в следующей итерации
+                    // Удаляем найденую новую точку, чтобы она не учавствовала в следующей итерации
                     delete avaliable_points[random_point_key];
                 }
 
                 // Определяем тип стартовой точки, исходя из выбранных следущих точек
                 wires[start_point_key] = definePiontType({x: start_point[j].x, y: start_point[j].y}, _next_points, connection_points[start_point_key]);
             }
-
-
-
-
-            // находим точки по диагонали от стартовой
-            var diagonal_points = getDiagonalPionts(start_point[j].x, start_point[j].y);
-            // заносим точки по диагонали в пустоту
-            diagonal_points.forEach(function(v,k){
-
-                var key = 'x'+ v.x+'_y'+ v.y;
-
-                if( !emptines[key] )
-                    emptines[key] = true;
-
-                // заносим точки по диагонали в специаяльный массив
-                diagonales[key]= true;
-            });
-
-            // если вокруг нет доступных точек
-            if( avaliable_points == false ){
-                // Помечаем стартовую точку как лампу. Выходим из цикла
-                wires['x'+start_point[j].x+'_y'+start_point[j].y].type = 'lamp';
-
-                break;
-                return;
-                // TODO: выходим из рекурсии?
-
-            }else{
-                // Заносим все доступные точки в пустоту
-                avaliable_points.forEach(function(v,k){
-                    if( !emptines['x'+ v.x+'_y'+ v.y] )
-                        emptines['x'+ v.x+'_y'+ v.y] = true;
-                });
-
-                // Определяем, сколько веток у нас будет
-                var branches_num = getBranchesNum();
-                // определяем следующие точки как массив
-                var next_point = [];
-
-                // Определяем следующую клетку для каждой ветки
-                for( var i = 0; i < branches_num; i++ ){
-
-                    console.log(i + ' avaliable_points');
-                    console.log(avaliable_points);
-
-                    var random_point_key = getRandomPointKey(avaliable_points);
-
-                    if( avaliable_points[random_point_key] ){
-                        next_point[i] = avaliable_points[random_point_key];
-
-                        // удаляем точку из доступных
-                        avaliable_points.splice(random_point_key,1);
-                        var key = 'x'+next_point[i].x+'_y'+ next_point[i].y;
-
-                        // Удаляем найденую клетку из пустот
-                        delete emptines[key];
-                    }
-                }
-            }
         }
+
+        // TODO записать _next_points в next_point
 
         if( next_point )
             build(next_point);
