@@ -32,6 +32,10 @@ var point = {
 
     trb: function(){
         return this.get(180);
+    },
+
+    rbl: function(){
+        return this.get(270);
     }
 }
 
@@ -54,5 +58,27 @@ var corner = {
 
     bl: function(){
         return this.get(270);
+    }
+}
+
+var start = {
+    get: function(deg){
+        return {type: 's', rotation: deg};
+    },
+
+    t: function(){
+        return this.get(180);
+    },
+
+    r: function(){
+        return this.get(270);
+    },
+
+    b: function(){
+        return this.get(0);
+    },
+
+    l: function(){
+        return this.get(90);
     }
 }

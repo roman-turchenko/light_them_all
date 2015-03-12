@@ -70,8 +70,7 @@ $(document).ready(function(){
     }
 
 
-    var c = 0;
-    var connection_points = {};
+    var c = 0
     function build(start_point){
 
         console.log(c);
@@ -79,68 +78,14 @@ $(document).ready(function(){
 
         //if( c > 2 ) return false;
 
-        // Точки для следующего цикла рекурсии
-        var next_point = [],
-            next_point_index = 0;
-
         for( var j = 0; j < start_point.length; j++ ){
 
-            // Ключ стартовой точки
-            var start_point_key = 'x'+start_point[j].x+'_y'+start_point[j].y;
-
             // Заносим стартовую точку в провода
-            if( !wires[start_point_key] )
-                wires[start_point_key] = {
-                    type: Object.keys(wires).length < 2 ? 'start' : 'wire',
-                    connection: connection_points[start_point_key] ? connection_points[start_point_key] : null
-                };
+            if( !wires['x'+start_point[j].x+'_y'+start_point[j].y] )
+                wires['x'+start_point[j].x+'_y'+start_point[j].y] = {type: Object.keys(wires).length < 2 ? 'start' : 'wire'};
 
             // Находим доступные вокруг точки
             var avaliable_points = getAvaliablePoint(start_point[j].x, start_point[j].y);
-
-            // если вокруг нет доступных точек
-            if( avaliable_points == false ){
-                // Помечаем стартовую точку как лампу. Выходим из цикла
-                wires[start_point_key].type = 'l';
-
-                break;
-                return;
-                // TODO: выходим из рекурсии?
-
-            }else{
-
-                // По умолчанию ветка одна
-                var branches_num = 1;
-
-                // Если доступно больше 1 точки - то мы можем ветвить
-                if( avaliable_points.length > 1 )
-                    branches_num = getBranchesNum();
-
-                // Точки, которые мы выбрали во время текущей итеррации
-                var _next_points = [];
-
-                // Случайно выбираем точки из доступных, исходя из кол-ва веток
-                for( var i = 0; i < branches_num; i++ ){
-
-                    next_point_index++;
-
-                    var random_point_key = getRandomPointKey(avaliable_points);
-                    _next_points[i] = avaliable_points[random_point_key];
-
-                    // TODO Добавляем стартовую точку как connection
-
-
-
-                    // Удаляем эту точку, чтобы она не учавствовала в следующей итерации
-                    delete avaliable_points[random_point_key];
-                }
-
-                // Определяем тип стартовой точки, исходя из выбранных следущих точек
-                wires[start_point_key] = definePiontType({x: start_point[j].x, y: start_point[j].y}, _next_points, connection_points[start_point_key]);
-            }
-
-
-
 
             // находим точки по диагонали от стартовой
             var diagonal_points = getDiagonalPionts(start_point[j].x, start_point[j].y);
@@ -201,86 +146,52 @@ $(document).ready(function(){
 
         if( next_point )
             build(next_point);
-    }
 
-    /**
-     *
-      * @param start_point
-     * @param next_points
-     * @param connection_point
-     *
-     * 0_-1 top
-     * 0_1  bot
-     * 1_0  left
-     * -1_0 right
-     */
+/*
+            //if( avaliable_points !== false ){
 
-    function definePiontType(start_point, next_points, connection_point){
 
-        var position = connection_point == null ? null : (start_point.x - connection_point.x) + '_' + (start_point.y - connection_point.y);
+                // объединяем доступные точки и диагональные точки
+                var all_points = avaliable_points.concat(diagonal_points);
 
-        next_points.forEach(function(v, k){
+                console.log('all_points');
+                console.log(all_points);
 
-            position += (start_point.x - v.x) + '_' + (start_point.y - v.y);
-        });
+                // Заносим все доступные точки в пустоту
+                all_points.forEach(function(v,k){
+                    emptines['x'+v.x+'_y'+ v.y] = true;
+                });
 
-        switch (position){
-            case "null_0_-1":
-                return start.t();
-            break;
+                // Определяем, сколько веток у нас будет
+                var branches_num = getBranchesNum();
 
-            case "null_-1_0":
-                return start.r();
-            break;
+                // определяем следующие точки как массив
+                var next_point = [];
 
-            case "null_0_1":
-                return start.b();
-            break;
+                // Определяем следующую клетку для каждой ветки
+                for( var i = 0; i < branches_num; i++ ){
 
-            case "null_1_0":
-                return start.l();
-            break;
+                    next_point[i] = getRandomPoint(avaliable_points);
+                    var key = 'x'+next_point[i].x+'_y'+ next_point[i].y;
 
-            case "0_-1_0_1":
-                return wire.h();
-            break;
+                    // Добавляем найденую клетку в провода
+                    wires[key] = {type: 'battery'};
+                    // Удаляем найденую клетку из пустот
+                    delete emptines[key];
+                }
 
-            case "1_0_-1_0":
-                return wire.w();
-            break;
-
-            case "0_-1_-1_0":
-                return corner.tr();
-            break;
-
-            case "-1_0_0_1":
-                return corner.rb();
-            break;
-
-            case "0_1_1_0":
-                return corner.bl();
-            break;
-
-            case "1_0_0_-1":
-                return corner.lt();
-            break;
-
-            case "0_1_1_0_0_-1":case "0_1_0_-1_1_0":
-                return point.blt();
-            break;
-
-            case "1_0_0_-1_-1_0":case "1_0_-1_0_0_-1":
-                return point.ltr();
-            break;
-
-            case "0_-1_-1_0_0_1":case "0_-1_0_1_-1_0":
-                return point.trb();
-            break;
-
-            case "-1_0_0_1_1_0":case "-1_0_1_0_0_1":
-                return point.rbl();
-            break;
-        }
+                build(next_point);
+*/
+           /* }else{
+                wires['x'+start_point[j].x+'_y'+start_point[j].y] = {type: 'lamp'};
+                var diagonal_points = getDiagonalPionts(start_point[j].x, start_point[j].y);
+                // Заносим все доступные точки в пустоту
+                diagonal_points.forEach(function(v,k){
+                    emptines['x'+v.x+'_y'+ v.y] = true;
+                    delete wires['x'+v.x+'_y'+ v.y];
+            //    });
+            //    return;
+            /*/
     }
 
     /**
