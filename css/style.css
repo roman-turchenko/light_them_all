@@ -11,6 +11,9 @@
 /* Wire */
 .w{ background: url("../img/wire.png") no-repeat; }
 
+/* Start point*/
+.s { background: url("../img/start.png") no-repeat; }
+
 
 /* game field */
 .field { }

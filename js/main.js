@@ -72,6 +72,8 @@ $(document).ready(function(){
 
     var c = 0;
     var connection_points = {};
+    var cords = {};
+
     function build(start_point){
 
         console.log(c);
@@ -81,19 +83,29 @@ $(document).ready(function(){
 
         // Точки для следующего цикла рекурсии
         var next_point = [],
-            next_point_index = 0;
+            next_point_index = -1;
 
         for( var j = 0; j < start_point.length; j++ ){
 
             // Ключ стартовой точки
             var start_point_key = 'x'+start_point[j].x+'_y'+start_point[j].y;
 
+            // Массив с координатами
+            cords[start_point_key] = start_point[j];
+
             // Заносим стартовую точку в провода
-            if( !wires[start_point_key] )
+            if( !wires[start_point_key] ){
+
+                // Если точка является началом, то у нее нет никакого коннекшена
+                if( Object.keys(wires).length == 0 )
+                    connection_points[start_point_key] = null;
+
                 wires[start_point_key] = {
-                    type: Object.keys(wires).length < 2 ? 'start' : 'wire',
-                    connection: connection_points[start_point_key] ? connection_points[start_point_key] : null
+                    type: Object.keys(wires).length == 0 ? 'start' : 'wire',
+                    connection: connection_points[start_point_key] ? connection_points[start_point_key] : null,
+                    rotation: 0,
                 };
+            }
 
             // Находим доступные вокруг точки
             var avaliable_points = getAvaliablePoint(start_point[j].x, start_point[j].y);
@@ -108,6 +120,8 @@ $(document).ready(function(){
                 // TODO: выходим из рекурсии?
 
             }else{
+
+//                if(c > 100) return;
 
                 // По умолчанию ветка одна
                 var branches_num = 1;
@@ -125,24 +139,26 @@ $(document).ready(function(){
                     next_point_index++;
 
                     var random_point_key = getRandomPointKey(avaliable_points);
-                    _next_points[i] = avaliable_points[random_point_key];
+                        _next_points[i]  = avaliable_points[random_point_key];
+
+                    // TODO записать _next_points в next_point
+                    next_point[next_point_index] = _next_points[i];
 
                     // TODO Добавляем стартовую точку как connection
                     connection_points['x'+avaliable_points[random_point_key].x+'_y'+avaliable_points[random_point_key].y] = start_point_key;
-
 
                     // Удаляем найденую новую точку, чтобы она не учавствовала в следующей итерации
                     delete avaliable_points[random_point_key];
                 }
 
                 // Определяем тип стартовой точки, исходя из выбранных следущих точек
-                wires[start_point_key] = definePiontType({x: start_point[j].x, y: start_point[j].y}, _next_points, connection_points[start_point_key]);
+                var point_type = definePiontType({x: start_point[j].x, y: start_point[j].y}, _next_points, cords[connection_points[start_point_key]] || null);
+                wires[start_point_key].type = point_type.type;
+                wires[start_point_key].rotation = point_type.rotation;
             }
         }
 
-        // TODO записать _next_points в next_point
-
-        if( next_point )
+        if( next_point.length > 0 )
             build(next_point);
     }
 
@@ -160,12 +176,20 @@ $(document).ready(function(){
 
     function definePiontType(start_point, next_points, connection_point){
 
+        if( connection_point == null && next_points.length == 2 ){
+            connection_point = next_points[0];
+            next_points.splice(0,1);
+        }
+
+
         var position = connection_point == null ? null : (start_point.x - connection_point.x) + '_' + (start_point.y - connection_point.y);
 
         next_points.forEach(function(v, k){
 
-            position += (start_point.x - v.x) + '_' + (start_point.y - v.y);
+            position += '_' + (start_point.x - v.x) + '_' + (start_point.y - v.y);
         });
+
+        // TODO Переписать все что ниже. Не все комбинации попадают в кейсы. Сделать универсальное решение
 
         switch (position){
             case "null_0_-1":
@@ -184,27 +208,27 @@ $(document).ready(function(){
                 return start.l();
             break;
 
-            case "0_-1_0_1":
+            case "0_-1_0_1":case "0_1_0_-1":
+                return wire.v();
+            break;
+
+            case "1_0_-1_0":case "-1_0_1_0":
                 return wire.h();
             break;
 
-            case "1_0_-1_0":
-                return wire.w();
-            break;
-
-            case "0_-1_-1_0":
+            case "0_-1_-1_0":case "-1_0_0_-1":
                 return corner.tr();
             break;
 
-            case "-1_0_0_1":
+            case "-1_0_0_1":case "0_1_-1_0":
                 return corner.rb();
             break;
 
-            case "0_1_1_0":
+            case "0_1_1_0":case "1_0_0_1":
                 return corner.bl();
             break;
 
-            case "1_0_0_-1":
+            case "1_0_0_-1":case "0_-1_1_0":
                 return corner.lt();
             break;
 
@@ -220,9 +244,12 @@ $(document).ready(function(){
                 return point.trb();
             break;
 
-            case "-1_0_0_1_1_0":case "-1_0_1_0_0_1":
+            case "-1_0_0_1_1_0":case "-1_0_1_0_0_1":case "1_0_0_1_-1_0":
                 return point.rbl();
             break;
+
+            default :
+                return {type: 'unknown', rotation: 0};
         }
     }
 
@@ -245,6 +272,7 @@ $(document).ready(function(){
             ];
 
         }else if( y == 1 ){// точка на нижнем ребре
+
             result = [
                 {x: x + 1, y: y},
                 {x: x - 1, y: y},
@@ -252,6 +280,7 @@ $(document).ready(function(){
             ];
 
         }else if( x == 1 ){// точка на левом ребре
+
             result = [
                 {x: x,     y: y + 1},
                 {x: x,     y: y - 1},
@@ -259,12 +288,15 @@ $(document).ready(function(){
             ];
 
         }else if( x == size_x ){// точка на правом ребре
+
             result = [
                 {x: x,     y: y + 1},
                 {x: x,     y: y - 1},
                 {x: x - 1, y: y}
             ];
+
         }else if( y == size_y ){// точка на верхней грани
+
             result = [
                 {x: x + 1, y: y},
                 {x: x - 1, y: y},
@@ -358,8 +390,14 @@ $(document).ready(function(){
 
             var element = $(document.getElementById(v));
             var type = wires[v].type;
+            var rotation = wires[v].rotation;
+            var classic = document.getElementById(v);
 
-            setTimeout(function(){element.addClass(type);}, 100*k);
+            setTimeout(function(){
+                element.addClass(type);
+                classic.style.webkitTransform = 'rotate('+rotation+'deg)';
+                classic.dataset.rotation = rotation;
+            }, 100*k);
         });
     }
 // ------------------
@@ -371,7 +409,8 @@ function getRandomInt(min, max){
 }
 
 function getBranchesNum(){
-    var data = [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1];
+    var data = [1,1,1,1,1,2,2,2,2,2];
+//    var data = [1,1,1,1,1];
     return data[getRandomInt(0, data.length - 1)];
 }
 
